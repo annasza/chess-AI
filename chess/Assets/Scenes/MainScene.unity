@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44657826, g: 0.49641263, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -423,5 +423,13 @@ MonoBehaviour:
   tileSize: 1
   yOffset: 0.2
   boardCenter: {x: 0, y: 0, z: 0}
-  prefabs: []
-  teamMaterials: []
+  prefabs:
+  - {fileID: 9154489932717185783, guid: a1b4a00237679f143b4b9f68f50ac25d, type: 3}
+  - {fileID: 5823260949682793907, guid: c27a9d917007eb748a6736c82789ec1f, type: 3}
+  - {fileID: 6108511185399813057, guid: 014709811c16d5f45afd4ad72ccdc501, type: 3}
+  - {fileID: 7266142946762432149, guid: 48c3a3ccaf63f2a46bb9c3bfcadea8d9, type: 3}
+  - {fileID: 5281799564610210257, guid: 5373bf7f08584654a85e6de29a5ea9ff, type: 3}
+  - {fileID: 2918692015937369140, guid: 3ea0a9462ecc10040b6fb5f5487139a8, type: 3}
+  teamMaterials:
+  - {fileID: 2100000, guid: f01f755d5b465ca49a661d3536d2176b, type: 2}
+  - {fileID: 2100000, guid: 1f3f1b1150db71c459b0c3f1049bf6d3, type: 2}

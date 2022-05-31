@@ -46,6 +46,10 @@ public class ChessPiece : MonoBehaviour
         return r;
     }
 
+    public virtual SpecialMove GetSpecialMoves(ref ChessPiece[,] board, ref List<Vector2Int[]> moveList, ref List<Vector2Int> avaibleMoves)
+    {
+        return SpecialMove.None;
+    }
     public virtual void SetPosition(Vector3 position, bool force = false)
     {
         desiredPosition = position;

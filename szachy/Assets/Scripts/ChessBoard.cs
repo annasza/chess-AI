@@ -371,7 +371,7 @@ public class ChessBoard : MonoBehaviour
             {
                 if (chessPieces[x,y].type == ChessPieceType.King)
                 {
-                    if (chessPieces[x,y].team == currentlyDragging.team)
+                    if (chessPieces[x,y].team != currentlyDragging.team)
                     {
                         targetKing = chessPieces[x,y];
                     }
@@ -409,7 +409,7 @@ public class ChessBoard : MonoBehaviour
             List<ChessPiece> simAttackingPieces = new List <ChessPiece>();
             for (int x = 0; x < TILE_X; x++)
             {
-                for (int y = 0; x < TILE_Y; y++)
+                for (int y = 0; y < TILE_Y; y++)
                 {
                     if (chessPieces[x,y] != null)
                     {

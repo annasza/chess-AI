@@ -197,8 +197,8 @@ public class ChessBoard : MonoBehaviour
         chessPieces[0, 0] = SpawnSinglePiece(ChessPieceType.Rook, whiteTeam);
         chessPieces[1, 0] = SpawnSinglePiece(ChessPieceType.Knight, whiteTeam);
         chessPieces[2, 0] = SpawnSinglePiece(ChessPieceType.Bishop, whiteTeam);
-        chessPieces[3, 0] = SpawnSinglePiece(ChessPieceType.King, whiteTeam);
-        chessPieces[4, 0] = SpawnSinglePiece(ChessPieceType.Queen, whiteTeam);
+        chessPieces[3, 0] = SpawnSinglePiece(ChessPieceType.Queen, whiteTeam);
+        chessPieces[4, 0] = SpawnSinglePiece(ChessPieceType.King, whiteTeam);
         chessPieces[5, 0] = SpawnSinglePiece(ChessPieceType.Bishop, whiteTeam);
         chessPieces[6, 0] = SpawnSinglePiece(ChessPieceType.Knight, whiteTeam);
         chessPieces[7, 0] = SpawnSinglePiece(ChessPieceType.Rook, whiteTeam);
@@ -229,6 +229,7 @@ public class ChessBoard : MonoBehaviour
         cp.type = type;
         cp.team = team;
         cp.GetComponent<MeshRenderer>().material = teamMaterials[team];
+        
 
         return cp;
     }
@@ -240,6 +241,7 @@ public class ChessBoard : MonoBehaviour
             for (int y = 0; y < TILE_Y; y++)
                 if (chessPieces[x, y] != null)
                     PositionSiglePieces(x, y, true);
+
     }
 
     private void PositionSiglePieces(int x, int y, bool force = false)

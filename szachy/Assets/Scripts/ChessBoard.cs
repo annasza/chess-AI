@@ -662,6 +662,7 @@ public class ChessBoard : MonoBehaviour
                     deadBlacks.RemoveAt(deadBlacks.Count - 1);
                 }
 
+                isWhiteTurn = !isWhiteTurn;
                 killed = false;
             }
 

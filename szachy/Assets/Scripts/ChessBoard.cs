@@ -44,9 +44,11 @@ public class ChessBoard : MonoBehaviour
     private bool isWhiteTurn;
 
     // Reverse
-    private ChessPiece lastChessPiece = null;
-    private List<Vector2Int> lastMove = new List<Vector2Int>();
     private int reverse = 0;
+    private List<ChessPiece> chessPiecesList = new List<ChessPiece>();
+    private List<bool> isKiller = new List<bool>();
+    private bool killed = false;
+
 
 
     private void Awake()
@@ -64,15 +66,6 @@ public class ChessBoard : MonoBehaviour
         {
             currentCamera = Camera.main;
             return;
-        }
-
-        // Reverse
-        if (reverse == 1)
-        {
-            print(lastChessPiece.currentY);
-            print(lastMove[0].y);
-            MoveTo(lastChessPiece, lastMove[0].x, lastMove[0].y);
-            reverse = 0;
         }
 
         RaycastHit info;
@@ -123,9 +116,6 @@ public class ChessBoard : MonoBehaviour
                 Vector2Int previousPosition = new Vector2Int(currentlyDragging.currentX, currentlyDragging.currentY);
 
                 // Reverse
-                lastMove.Clear();
-                lastChessPiece = currentlyDragging;
-                lastMove.Add(previousPosition);
 
                 bool validMove = MoveTo(currentlyDragging, hitPosition.x, hitPosition.y);
                 if (!validMove)
@@ -266,7 +256,7 @@ public class ChessBoard : MonoBehaviour
     private void PositionSiglePieces(int x, int y, bool force = false)
     {
         chessPieces[x, y].currentX = x;
-        chessPieces[x, y].currentY = y;
+        chessPieces[x, y].currentY = y; 
         chessPieces[x, y].SetPosition(GetTileCenter(x, y), force);
     }
 
@@ -595,22 +585,44 @@ public class ChessBoard : MonoBehaviour
                     + new Vector3(tileSize / 2, 0, tileSize / 2)
                     + (Vector3.back * deathSpacing) * deadBlacks.Count);
             }
+
+            isKiller.Add(true);
+        }
+        else
+        {
+            if(reverse == 0)
+                isKiller.Add(false);
         }
 
         chessPieces[x, y] = cp;
-        chessPieces[previousPosition.x, previousPosition.y] = null;
+
+        if(!killed)
+            chessPieces[previousPosition.x, previousPosition.y] = null;
+
 
         PositionSiglePieces(x, y);
 
         isWhiteTurn = !isWhiteTurn;
-        moveList.Add(new Vector2Int[] { previousPosition, new Vector2Int(x, y) });
+
+        if(reverse == 0)
+        {
+            moveList.Add(new Vector2Int[] { previousPosition, new Vector2Int(x, y) });
+
+            // Reverse
+            chessPiecesList.Add(cp);
+        }
 
         ProcessSpecialMove();
 
-        if (CheckForCheckmate())
+        if(reverse == 0)
         {
-            CheckMate(cp.team);
+            if (CheckForCheckmate())
+            {
+                CheckMate(cp.team);
+            }
         }
+
+        reverse = 0;
 
         return true;
     }
@@ -628,5 +640,35 @@ public class ChessBoard : MonoBehaviour
     public void Reverse()
     {
         reverse = 1;
+
+        if (moveList.Count > 0)
+        {
+            MoveTo(chessPiecesList[chessPiecesList.Count - 1], moveList[moveList.Count - 1][0].x, moveList[moveList.Count - 1][0].y);
+
+            if (isKiller[isKiller.Count - 1])
+            {
+                reverse = 1;
+                killed = true;
+                if (chessPiecesList[chessPiecesList.Count - 1].team == 1)
+                {
+                    MoveTo(deadWhites[deadWhites.Count - 1], moveList[moveList.Count - 1][1].x, moveList[moveList.Count - 1][1].y);
+                    deadWhites[deadWhites.Count - 1].SetScale(Vector3.one * 1f);
+                    deadWhites.RemoveAt(deadWhites.Count - 1);
+                }
+                else
+                {
+                    MoveTo(deadBlacks[deadBlacks.Count - 1], moveList[moveList.Count - 1][1].x, moveList[moveList.Count - 1][1].y);
+                    deadBlacks[deadBlacks.Count - 1].SetScale(Vector3.one * 1f);
+                    deadBlacks.RemoveAt(deadBlacks.Count - 1);
+                }
+
+                killed = false;
+            }
+
+            isKiller.RemoveAt(isKiller.Count - 1);
+            moveList.RemoveAt(moveList.Count - 1);
+            chessPiecesList.RemoveAt(chessPiecesList.Count - 1);
+        }
+
     }
 }

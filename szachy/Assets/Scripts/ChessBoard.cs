@@ -741,11 +741,11 @@ public class ChessBoard : MonoBehaviour
                 {
                     if (chessPieces[x, y].team == currentTeam)
                     {
-                        foreach (Vector2Int r in chessPieces[x, y].GetAvailableMoves(ref chessPieces, x, y))
+                        foreach (Vector2Int vector in chessPieces[x, y].GetAvailableMoves(ref chessPieces, x, y))
                         {
-                            tuple = (chessPieces[x, y], r);
+                            tuple = (chessPieces[x, y], vector);
                             moves.Add(tuple);
-                            chessPieces[x, y].GetSpecialMoves(ref board, ref movelist, ref moves);
+                            //chessPieces[x, y].GetSpecialMoves(ref board, ref movelist, ref moves);
                         }
                     }
                 }

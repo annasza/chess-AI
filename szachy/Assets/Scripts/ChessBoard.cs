@@ -136,6 +136,7 @@ public class ChessBoard : MonoBehaviour
                 //AI move
                 AITurn = true;
                 nextMove = SearchMove(AIDepth);
+                print(nextMove);
                 MoveTo(nextMove.Item1, nextMove.Item2.x, nextMove.Item2.y);
                 AITurn = false;
                 //*/
@@ -623,7 +624,7 @@ public class ChessBoard : MonoBehaviour
             // If its the enemy team
             if (ocp.team == 0)
             {
-                if (ocp.type == ChessPieceType.King)
+                if (ocp.type == ChessPieceType.King && !AITurn)
                     CheckMate(1);
 
                 deadWhites.Add(ocp);
@@ -636,7 +637,7 @@ public class ChessBoard : MonoBehaviour
             }
             else
             {
-                if (ocp.type == ChessPieceType.King)
+                if (ocp.type == ChessPieceType.King && !AITurn)
                     CheckMate(0);
 
                 deadBlacks.Add(ocp);
@@ -704,7 +705,6 @@ public class ChessBoard : MonoBehaviour
     // Reverse
     public void Reverse()
     {
-        print(listofspecials[listofspecials.Count - 1]);
         if (moveList.Count > 0)
         {
             reverse = 1;
@@ -773,11 +773,11 @@ public class ChessBoard : MonoBehaviour
         double Beta = double.MaxValue;
         (ChessPiece, Vector2Int) BestMove = (null, Vector2Int.zero);
 
-        NegaMaxAlphaBeta(Alpha, Beta, Depth, this, ref BestMove);
+        NegaMaxAlphaBeta(Alpha, Beta, Depth, this, ref BestMove, false);
         return BestMove;
     }
 
-    private double NegaMaxAlphaBeta(double Alpha, double Beta, int Depth, ChessBoard board, ref (ChessPiece, Vector2Int) BestMove)
+    private double NegaMaxAlphaBeta(double Alpha, double Beta, int Depth, ChessBoard board, ref (ChessPiece, Vector2Int) BestMove, bool isWhiteTurn)
     {
         List<Vector2Int> trash = new List<Vector2Int>();
         double score;
@@ -785,14 +785,14 @@ public class ChessBoard : MonoBehaviour
         {
             return EvaluatePosition(board.chessPieces);
         }
-        List<(ChessPiece ,Vector2Int)> moves = GenerateMoves(1, ref board.chessPieces, board.moveList);
+        List<(ChessPiece ,Vector2Int)> moves = GenerateMoves(isWhiteTurn, ref board.chessPieces, board.moveList);
 
         foreach ((ChessPiece, Vector2Int) move in moves)
         {
             board.specialMove = move.Item1.GetSpecialMoves(ref board.chessPieces, ref board.moveList, ref trash);
 
             MoveTo(move.Item1, move.Item2.x, move.Item2.y);
-            score = -NegaMaxAlphaBeta(-Beta, -Alpha, Depth - 1, board, ref BestMove);
+            score = -NegaMaxAlphaBeta(-Beta, -Alpha, Depth - 1, board, ref BestMove, !isWhiteTurn);
             Reverse();
 
             if (score >= Beta)
@@ -812,11 +812,13 @@ public class ChessBoard : MonoBehaviour
     }
 
 
-    private List<(ChessPiece, Vector2Int)> GenerateMoves(int currentTeam, ref ChessPiece[,] board, List<Vector2Int[]> movelist)
+    private List<(ChessPiece, Vector2Int)> GenerateMoves(bool isWhiteTurn, ref ChessPiece[,] board, List<Vector2Int[]> movelist)
     {
         List<Vector2Int> moves = new List<Vector2Int>();
         List<(ChessPiece, Vector2Int)> fullMoves = new List<(ChessPiece cp, Vector2Int move)>();
         (ChessPiece, Vector2Int) tuple;
+        int whatTeam = 0;
+        if (isWhiteTurn == false) whatTeam = 1;
 
         for (int x = 0; x < 8; x++)
         {
@@ -825,7 +827,7 @@ public class ChessBoard : MonoBehaviour
                 if (chessPieces[x, y] != null)
                 {
                     
-                    if (chessPieces[x, y].team == currentTeam)
+                    if (chessPieces[x, y].team == whatTeam)
                     {
                         foreach (Vector2Int vector in chessPieces[x, y].GetAvailableMoves(ref chessPieces, x, y))
                         {

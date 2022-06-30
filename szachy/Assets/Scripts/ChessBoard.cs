@@ -45,13 +45,16 @@ public class ChessBoard : MonoBehaviour
 
     //ai
     (ChessPiece, Vector2Int) nextMove;
-    [SerializeField] private int AIDepth = 4;
-    [SerializeField] private bool AITurn = false;
+    [SerializeField] private int AIDepth = 5;
+    private bool AITurn = false;
+
     // Reverse
     private int reverse = 0;
     private List<ChessPiece> chessPiecesList = new List<ChessPiece>();
     private List<bool> isKiller = new List<bool>();
     private bool killed = false;
+    private List<SpecialMove> listofspecials = new List<SpecialMove>();
+    [SerializeField] private bool reversed = false;
 
     private void Awake()
     {
@@ -64,13 +67,10 @@ public class ChessBoard : MonoBehaviour
 
     private void Update()
     {
-
-        
-        if (AITurn)
+        if(reversed)
         {
-            nextMove = SearchMove(AIDepth);
-            MoveTo(nextMove.Item1, nextMove.Item2.x, nextMove.Item2.y);
-            AITurn = false;
+            Reverse();
+            reversed = false;
         }
 
         if (!currentCamera)
@@ -126,14 +126,20 @@ public class ChessBoard : MonoBehaviour
             {
                 Vector2Int previousPosition = new Vector2Int(currentlyDragging.currentX, currentlyDragging.currentY);
 
-                // Reverse
-
                 bool validMove = MoveTo(currentlyDragging, hitPosition.x, hitPosition.y);
                 if (!validMove)
                 {
                     currentlyDragging.SetPosition(GetTileCenter(previousPosition.x, previousPosition.y));
                 }
                 currentlyDragging = null;
+
+                //AI move
+                AITurn = true;
+                nextMove = SearchMove(AIDepth);
+                MoveTo(nextMove.Item1, nextMove.Item2.x, nextMove.Item2.y);
+                AITurn = false;
+                //*/
+
                 RemoveHighlightTiles();
             }
         }
@@ -347,6 +353,10 @@ public class ChessBoard : MonoBehaviour
     //Special Moves
     private void ProcessSpecialMove()
     {
+        if(specialMove == SpecialMove.None)
+        {
+            listofspecials.Add(SpecialMove.None);
+        }
         if (specialMove == SpecialMove.EnPassant)
         {
             var newMove = moveList[moveList.Count - 1];
@@ -379,8 +389,44 @@ public class ChessBoard : MonoBehaviour
                             + (Vector3.back * deathSpacing) * deadBlacks.Count);
                     }
                     chessPieces[enemyPawn.currentX, enemyPawn.currentY] = null;
+                    isKiller.RemoveAt(isKiller.Count - 1);
+                    isKiller.Add(true);
+                    listofspecials.Add(SpecialMove.EnPassant);
+
                 }
             }
+        }
+        if (specialMove == SpecialMove.Promotion)
+        {
+            Vector2Int[] lastMove = moveList[moveList.Count - 1];
+            ChessPiece targetPawn = chessPieces[lastMove[1].x, lastMove[1].y];
+
+            if(targetPawn.type == ChessPieceType.Pawn)
+            {
+                if(targetPawn.team == 0 && lastMove[1].y == 7)
+                {
+                    ChessPiece newQueen = SpawnSinglePiece(ChessPieceType.Queen, 0);
+
+                    chessPieces[lastMove[1].x, lastMove[1].y].SetPosition(
+                    new Vector3(0,-10, 0)
+                    - bounds);                                                          //out of sight, out of mind 
+
+                    chessPieces[lastMove[1].x, lastMove[1].y] = newQueen;
+                    PositionSiglePieces(lastMove[1].x, lastMove[1].y, true);
+                }
+                if (targetPawn.team == 1 && lastMove[1].y == 0)
+                {
+                    ChessPiece newQueen = SpawnSinglePiece(ChessPieceType.Queen, 1);
+
+                    chessPieces[lastMove[1].x, lastMove[1].y].SetPosition(
+                    new Vector3(0, -10, 0)
+                    - bounds);                                                          //out of sight, out of mind
+
+                    chessPieces[lastMove[1].x, lastMove[1].y] = newQueen;
+                    PositionSiglePieces(lastMove[1].x, lastMove[1].y, true);
+                }
+            }
+            listofspecials.Add(SpecialMove.Promotion);
         }
     }
     private void PreventCheck()
@@ -557,7 +603,12 @@ public class ChessBoard : MonoBehaviour
     private bool MoveTo(ChessPiece cp, int x, int y)
     {
         if (!ContainsValidMove(ref availableMoves, new Vector2Int(x, y)) && reverse == 0)
-            return false;
+        {
+            if (!AITurn)             //Nie chce mi sie wglebiac w ContainsValidMove, ale AI robi tylko legalne ruchy, wiec ma w sobie to wbudowane
+            {
+                return false;
+            }
+        }
 
         Vector2Int previousPosition = new Vector2Int(cp.currentX, cp.currentY);
 
@@ -623,7 +674,10 @@ public class ChessBoard : MonoBehaviour
             chessPiecesList.Add(cp);
         }
 
-        ProcessSpecialMove();
+        if (reverse == 0)
+        {
+            ProcessSpecialMove();
+        }
 
         if(reverse == 0)
         {
@@ -650,36 +704,63 @@ public class ChessBoard : MonoBehaviour
     // Reverse
     public void Reverse()
     {
-        reverse = 1;
-
+        print(listofspecials[listofspecials.Count - 1]);
         if (moveList.Count > 0)
         {
+            reverse = 1;
+            if (listofspecials[listofspecials.Count - 1] == SpecialMove.Promotion)
+            {
+
+                Destroy(chessPieces[moveList[moveList.Count - 1][1].x, moveList[moveList.Count - 1][1].y].gameObject);
+
+            }
             MoveTo(chessPiecesList[chessPiecesList.Count - 1], moveList[moveList.Count - 1][0].x, moveList[moveList.Count - 1][0].y);
+
 
             if (isKiller[isKiller.Count - 1])
             {
                 reverse = 1;
                 killed = true;
-                if (chessPiecesList[chessPiecesList.Count - 1].team == 1)
+                if (listofspecials[listofspecials.Count - 1] != SpecialMove.EnPassant)
                 {
-                    MoveTo(deadWhites[deadWhites.Count - 1], moveList[moveList.Count - 1][1].x, moveList[moveList.Count - 1][1].y);
-                    deadWhites[deadWhites.Count - 1].SetScale(Vector3.one * 1f);
-                    deadWhites.RemoveAt(deadWhites.Count - 1);
+                    if (chessPiecesList[chessPiecesList.Count - 1].team == 1)
+                    {
+                        MoveTo(deadWhites[deadWhites.Count - 1], moveList[moveList.Count - 1][1].x, moveList[moveList.Count - 1][1].y);
+                        deadWhites[deadWhites.Count - 1].SetScale(Vector3.one * 1f);
+                        deadWhites.RemoveAt(deadWhites.Count - 1);
+                    }
+                    else
+                    {
+                        MoveTo(deadBlacks[deadBlacks.Count - 1], moveList[moveList.Count - 1][1].x, moveList[moveList.Count - 1][1].y);
+                        deadBlacks[deadBlacks.Count - 1].SetScale(Vector3.one * 1f);
+                        deadBlacks.RemoveAt(deadBlacks.Count - 1);
+                    }
                 }
                 else
                 {
-                    MoveTo(deadBlacks[deadBlacks.Count - 1], moveList[moveList.Count - 1][1].x, moveList[moveList.Count - 1][1].y);
-                    deadBlacks[deadBlacks.Count - 1].SetScale(Vector3.one * 1f);
-                    deadBlacks.RemoveAt(deadBlacks.Count - 1);
+                    if (chessPiecesList[chessPiecesList.Count - 1].team == 1)
+                    {
+                        MoveTo(deadWhites[deadWhites.Count - 1], moveList[moveList.Count - 1][1].x, moveList[moveList.Count - 1][1].y+1);
+                        deadWhites[deadWhites.Count - 1].SetScale(Vector3.one * 1f);
+                        deadWhites.RemoveAt(deadWhites.Count - 1);
+                    }
+                    else
+                    {
+                        MoveTo(deadBlacks[deadBlacks.Count - 1], moveList[moveList.Count - 1][1].x, moveList[moveList.Count - 1][1].y-1);
+                        deadBlacks[deadBlacks.Count - 1].SetScale(Vector3.one * 1f);
+                        deadBlacks.RemoveAt(deadBlacks.Count - 1);
+                    }
                 }
 
                 isWhiteTurn = !isWhiteTurn;
                 killed = false;
             }
 
+            listofspecials.RemoveAt(listofspecials.Count - 1);
             isKiller.RemoveAt(isKiller.Count - 1);
             moveList.RemoveAt(moveList.Count - 1);
             chessPiecesList.RemoveAt(chessPiecesList.Count - 1);
+            specialMove = SpecialMove.None;
         }
 
     }
@@ -698,6 +779,7 @@ public class ChessBoard : MonoBehaviour
 
     private double NegaMaxAlphaBeta(double Alpha, double Beta, int Depth, ChessBoard board, ref (ChessPiece, Vector2Int) BestMove)
     {
+        List<Vector2Int> trash = new List<Vector2Int>();
         double score;
         if (Depth == 0)
         {
@@ -707,9 +789,11 @@ public class ChessBoard : MonoBehaviour
 
         foreach ((ChessPiece, Vector2Int) move in moves)
         {
-            board.MoveTo(move.Item1, move.Item2.x, move.Item2.y);
-            score = -NegaMaxAlphaBeta(-Beta, -Alpha, Depth - 1, board, ref BestMove);
+            board.specialMove = move.Item1.GetSpecialMoves(ref board.chessPieces, ref board.moveList, ref trash);
 
+            MoveTo(move.Item1, move.Item2.x, move.Item2.y);
+            score = -NegaMaxAlphaBeta(-Beta, -Alpha, Depth - 1, board, ref BestMove);
+            Reverse();
 
             if (score >= Beta)
             {
@@ -730,7 +814,8 @@ public class ChessBoard : MonoBehaviour
 
     private List<(ChessPiece, Vector2Int)> GenerateMoves(int currentTeam, ref ChessPiece[,] board, List<Vector2Int[]> movelist)
     {
-        List<(ChessPiece, Vector2Int)> moves = new List<(ChessPiece cp, Vector2Int move)>();
+        List<Vector2Int> moves = new List<Vector2Int>();
+        List<(ChessPiece, Vector2Int)> fullMoves = new List<(ChessPiece cp, Vector2Int move)>();
         (ChessPiece, Vector2Int) tuple;
 
         for (int x = 0; x < 8; x++)
@@ -739,19 +824,25 @@ public class ChessBoard : MonoBehaviour
             {
                 if (chessPieces[x, y] != null)
                 {
+                    
                     if (chessPieces[x, y].team == currentTeam)
                     {
                         foreach (Vector2Int vector in chessPieces[x, y].GetAvailableMoves(ref chessPieces, x, y))
                         {
+                            moves.Add(vector);
+                        }
+                        chessPieces[x, y].GetSpecialMoves(ref board, ref movelist, ref moves);
+                        foreach (Vector2Int vector in moves)
+                        {
                             tuple = (chessPieces[x, y], vector);
-                            moves.Add(tuple);
-                            //chessPieces[x, y].GetSpecialMoves(ref board, ref movelist, ref moves);
+                            fullMoves.Add(tuple);
+                            
                         }
                     }
                 }
             }
         }
-        return moves;
+        return fullMoves;
     }
 
     //evaluate position

@@ -46,13 +46,12 @@ public class ChessBoard : MonoBehaviour
     //ai
     (ChessPiece, Vector2Int) nextMove;
     [SerializeField] private int AIDepth = 4;
+    [SerializeField] private bool AITurn = false;
     // Reverse
     private int reverse = 0;
     private List<ChessPiece> chessPiecesList = new List<ChessPiece>();
     private List<bool> isKiller = new List<bool>();
     private bool killed = false;
-
-
 
     private void Awake()
     {
@@ -65,6 +64,15 @@ public class ChessBoard : MonoBehaviour
 
     private void Update()
     {
+
+        
+        if (AITurn)
+        {
+            nextMove = SearchMove(AIDepth);
+            MoveTo(nextMove.Item1, nextMove.Item2.x, nextMove.Item2.y);
+            AITurn = false;
+        }
+
         if (!currentCamera)
         {
             currentCamera = Camera.main;
@@ -127,13 +135,6 @@ public class ChessBoard : MonoBehaviour
                 }
                 currentlyDragging = null;
                 RemoveHighlightTiles();
-
-                //ai 
-                if (validMove)
-                {   
-                    nextMove = SearchMove(AIDepth);
-                    MoveTo(nextMove.Item1, nextMove.Item2.x, nextMove.Item2.y);
-                }
             }
         }
         else
@@ -709,7 +710,6 @@ public class ChessBoard : MonoBehaviour
             board.MoveTo(move.Item1, move.Item2.x, move.Item2.y);
             score = -NegaMaxAlphaBeta(-Beta, -Alpha, Depth - 1, board, ref BestMove);
 
-            board.Reverse();
 
             if (score >= Beta)
             {

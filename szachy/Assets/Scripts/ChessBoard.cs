@@ -615,7 +615,7 @@ public class ChessBoard : MonoBehaviour
         double Beta = double.MaxValue;
         (ChessPiece, Vector2Int) BestMove;
 
-        NegaMaxAlphaBeta(Alpha, Beta, Depth, this, ref BestMove); //stworzyc kopie tablicy trzeba jeszcze
+        NegaMaxAlphaBeta(Alpha, Beta, Depth, this, ref BestMove);
     }
 
     private double NegaMaxAlphaBeta(double Alpha, double Beta,  int Depth, ChessBoard board, ref (ChessPiece, Vector2Int) BestMove)

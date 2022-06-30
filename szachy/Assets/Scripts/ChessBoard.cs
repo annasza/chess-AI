@@ -672,4 +672,124 @@ public class ChessBoard : MonoBehaviour
         }
 
     }
+    //ai
+
+    private void SearchMove(int Depth)
+
+    {
+        double Alpha = double.MinValue;
+        double Beta = double.MaxValue;
+        (ChessPiece, Vector2Int) BestMove;
+
+        NegaMaxAlphaBeta(Alpha, Beta, Depth, this, ref BestMove);
+    }
+
+    private double NegaMaxAlphaBeta(double Alpha, double Beta, int Depth, ChessBoard board, ref (ChessPiece, Vector2Int) BestMove)
+    {
+        double score;
+        if (Depth == 0)
+        {
+            return EvaluatePosition(board.chessPieces);
+        }
+        List<Vector2Int> moves = GenerateMoves(1, board.chessPieces, board.moveList);
+
+        foreach ((ChessPiece, Vector2Int) move in moves)
+        {
+            board.MoveTo(move.Item1, move.Item2.x, move.Item2.y);
+            score = -NegaMaxAlphaBeta(-Beta, -Alpha, ply - 1, board);
+
+            board.Reverse();
+
+            if (score >= Beta)
+            {
+                return beta;
+            }
+            if (score > alpha)
+            {
+                Alpha = score;
+                if (Depth == 1)
+                {
+                    BestMove = move;
+                }
+            }
+        }
+        return Alpha;
+    }
+
+
+    private List<(ChessPiece, Vector2Int)> GenerateMoves(int currentTeam, ref ChessPiece[,] board, List<Vector2Int[]> movelist)
+    {
+        List<(ChessPiece, Vector2Int)> moves = new List<(ChessPiece cp, Vector2Int move)>();
+        (ChessPiece, Vector2Int) tuple;
+
+        for (int x = 0; x < 8; x++)
+        {
+            for (int y = 0; y < 8; y++)
+            {
+                if (chessPieces[x, y] != null)
+                {
+                    if (chessPieces[x, y].team == currentTeam)
+                    {
+                        foreach (Vector2Int r in chessPieces[x, y].GetAvailableMoves(ref chessPieces, x, y))
+                        {
+                            tuple = (chessPieces[x, y], r);
+                            moves.Add(tuple);
+                            chessPieces[x, y].GetSpecialMoves(ref board, ref movelist, ref moves);
+                        }
+                    }
+                }
+            }
+        }
+        return moves;
+    }
+
+    //evaluate position
+    private double EvaluatePosition(ChessPiece[,] board)
+    {
+        double eval = 0;
+        int value = 0;
+        for (int x = 0; x < 8; x++)
+        {
+            for (int y = 0; y < 8; y++)
+            {
+                if (board[x, y] != null)
+                {
+                    if (board[x, y].type == ChessPieceType.Pawn)
+                    {
+                        value = 1;
+                    }
+                    if (board[x, y].type == ChessPieceType.Knight)
+                    {
+                        value = 3;
+                    }
+                    if (board[x, y].type == ChessPieceType.Bishop)
+                    {
+                        value = 3;
+                    }
+                    if (board[x, y].type == ChessPieceType.Rook)
+                    {
+                        value = 5;
+                    }
+                    if (board[x, y].type == ChessPieceType.Queen)
+                    {
+                        value = 9;
+                    }
+                    if (board[x, y].type == ChessPieceType.King)
+                    {
+                        value = 999;
+                    }
+                    if (board[x, y].team == 0)
+                    {
+                        eval += value;
+                    }
+                    if (board[x, y].team == 1)
+                    {
+                        eval -= value;
+                    }
+                }
+            }
+        }
+
+        return eval;
+    }
 }

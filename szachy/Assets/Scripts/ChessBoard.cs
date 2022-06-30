@@ -43,6 +43,9 @@ public class ChessBoard : MonoBehaviour
     private SpecialMove specialMove;
     private bool isWhiteTurn;
 
+    //ai
+    (ChessPiece, Vector2Int) nextMove;
+    [SerializeField] private int AIDepth = 4;
     // Reverse
     private int reverse = 0;
     private List<ChessPiece> chessPiecesList = new List<ChessPiece>();
@@ -124,6 +127,13 @@ public class ChessBoard : MonoBehaviour
                 }
                 currentlyDragging = null;
                 RemoveHighlightTiles();
+
+                //ai 
+                if (validMove)
+                {   
+                    nextMove = SearchMove(AIDepth);
+                    MoveTo(nextMove.Item1, nextMove.Item2.x, nextMove.Item2.y);
+                }
             }
         }
         else
@@ -674,14 +684,15 @@ public class ChessBoard : MonoBehaviour
     }
     //ai
 
-    private void SearchMove(int Depth)
+    private (ChessPiece, Vector2Int) SearchMove(int Depth)
 
     {
         double Alpha = double.MinValue;
         double Beta = double.MaxValue;
-        (ChessPiece, Vector2Int) BestMove;
+        (ChessPiece, Vector2Int) BestMove = (null, Vector2Int.zero);
 
         NegaMaxAlphaBeta(Alpha, Beta, Depth, this, ref BestMove);
+        return BestMove;
     }
 
     private double NegaMaxAlphaBeta(double Alpha, double Beta, int Depth, ChessBoard board, ref (ChessPiece, Vector2Int) BestMove)
@@ -691,20 +702,20 @@ public class ChessBoard : MonoBehaviour
         {
             return EvaluatePosition(board.chessPieces);
         }
-        List<Vector2Int> moves = GenerateMoves(1, board.chessPieces, board.moveList);
+        List<(ChessPiece ,Vector2Int)> moves = GenerateMoves(1, ref board.chessPieces, board.moveList);
 
         foreach ((ChessPiece, Vector2Int) move in moves)
         {
             board.MoveTo(move.Item1, move.Item2.x, move.Item2.y);
-            score = -NegaMaxAlphaBeta(-Beta, -Alpha, ply - 1, board);
+            score = -NegaMaxAlphaBeta(-Beta, -Alpha, Depth - 1, board, ref BestMove);
 
             board.Reverse();
 
             if (score >= Beta)
             {
-                return beta;
+                return Beta;
             }
-            if (score > alpha)
+            if (score > Alpha)
             {
                 Alpha = score;
                 if (Depth == 1)
